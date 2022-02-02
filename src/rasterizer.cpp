@@ -105,8 +105,6 @@ void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Co
     // TODO: Task 4: Rasterize the triangle, calculating barycentric coordinates and using them to interpolate vertex colors across the triangle
     // Hint: You can reuse code from rasterize_triangle
     
-    
-    
 }
 
 
