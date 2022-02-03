@@ -84,8 +84,9 @@ void RasterizerImp::rasterize_triangle(float x0, float y0,
             float x_center = x + 0.5, y_center = y + 0.5;
             Vector2D v0(x_center-x0, y_center-y0), v1(x_center-x1, y_center-y1), v2(x_center-x2, y_center-y2);
             // Test whether sample point is in our triangle
-            if ((CGL::dot(v0, n0) >= 0 && CGL::dot(v1, n1) >= 0 && CGL::dot(v2, n2) >= 0) ||
-                (CGL::dot(v0, n0) <= 0 && CGL::dot(v1, n1) <= 0 && CGL::dot(v2, n2) <= 0)) {
+            float v0_n0 = dot(v0, n0), v1_n1 = dot(v1, n1), v2_n2 = dot(v2, n2);
+            if ((v0_n0 >= 0 && v1_n1 >= 0 && v2_n2 >= 0) ||
+                (v0_n0 <= 0 && v1_n1 <= 0 && v2_n2 <= 0)) {
                 fill_pixel(x, y, color);
             }
         }
@@ -104,7 +105,32 @@ void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Co
 {
     // TODO: Task 4: Rasterize the triangle, calculating barycentric coordinates and using them to interpolate vertex colors across the triangle
     // Hint: You can reuse code from rasterize_triangle
-    
+    // Normal vector of three lines: n = (-(y1-y0), (x1-x0))
+    Vector2D n0(-(y1-y0), x1-x0), n1(-(y2-y1), x2-x1), n2(-(y0-y2), x0-x2);
+    // Bounding box of the triangle
+    size_t x_min = (size_t) min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
+    size_t x_max = (size_t) max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
+    size_t y_min = (size_t) min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
+    size_t y_max = (size_t) max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
+    // Ranges of alpha and bete
+    float alpha_max = dot(Vector2D(x0 - x1, y0 - y1), n1);
+    float beta_max = dot(Vector2D(x1 - x2, y1 - y2), n2);
+    // Loop through x and y in the bounding box
+    for (size_t x=x_min; x<x_max; x++) {
+        for (size_t y=y_min; y<y_max; y++) {
+            float x_center = x + 0.5, y_center = y + 0.5;
+            Vector2D v0(x_center-x0, y_center-y0), v1(x_center-x1, y_center-y1), v2(x_center-x2, y_center-y2);
+            // Test whether sample point is in our triangle
+            float v0_n0 = dot(v0, n0), v1_n1 = dot(v1, n1), v2_n2 = dot(v2, n2);
+            if ((v0_n0 >= 0 && v1_n1 >= 0 && v2_n2 >= 0) ||
+                (v0_n0 <= 0 && v1_n1 <= 0 && v2_n2 <= 0)) {
+                float alpha = v1_n1 / alpha_max;
+                float beta = v2_n2 / beta_max;
+                float gamma = 1 - alpha - beta;
+                fill_pixel(x, y, alpha * c0 + beta * c1 + gamma * c2);
+            }
+        }
+    }
 }
 
 
