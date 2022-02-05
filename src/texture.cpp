@@ -11,12 +11,14 @@ namespace CGL {
 Color Texture::sample(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
     // return magenta for invalid level
+    // A function pointer for sample_method. It's set according to psm
     Color (CGL::Texture::*sample_method)(Vector2D, int);
     if (sp.psm == P_NEAREST) {
         sample_method = &Texture::sample_nearest;
     } else if (sp.psm == P_LINEAR) {
         sample_method = &Texture::sample_bilinear;
     } else {
+        // By default we use sample_nearest
         sample_method = &Texture::sample_nearest;
     }
     
@@ -26,6 +28,8 @@ Color Texture::sample(const SampleParams& sp) {
         return (this->*sample_method)(sp.p_uv, level);
     } else if (sp.lsm == L_NEAREST) {
         level = round(get_level(sp));
+        //float norm_level = level * 1.0 / kMaxMipLevels;
+        //return Color(norm_level, norm_level, norm_level);
         return (this->*sample_method)(sp.p_uv, level);
     } else if (sp.lsm == L_LINEAR) {
         float continuous_level = get_level(sp);
@@ -41,7 +45,7 @@ Color Texture::sample(const SampleParams& sp) {
 
 float Texture::get_level(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
-    float l = max(((sp.p_dx_uv - sp.p_uv)*this->width).norm(), ((sp.p_dy_uv - sp.p_uv)*this->height).norm());
+    float l = max((sp.p_dx_uv - sp.p_uv).norm() * this->width, (sp.p_dy_uv - sp.p_uv).norm() *this->height);
     return log2(l);
 }
 

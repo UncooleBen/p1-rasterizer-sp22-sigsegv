@@ -177,34 +177,42 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
     float alpha_max = dot(Vector2D(x0 - x1, y0 - y1), n1);
     float beta_max = dot(Vector2D(x1 - x2, y1 - y2), n2);
     // Loop through x and y in the bounding box
+    size_t supersampling_size = round(sqrt(this->sample_rate));
+    float step_size = 1.0 / supersampling_size;
+    
     for (size_t x=x_min; x<x_max; x++) {
         for (size_t y=y_min; y<y_max; y++) {
-            float x_center = x + 0.5, y_center = y + 0.5;
-            Vector2D v0(x_center-x0, y_center-y0), v1(x_center-x1, y_center-y1), v2(x_center-x2, y_center-y2);
-            // Test whether sample point is in our triangle
-            float v0_n0 = dot(v0, n0), v1_n1 = dot(v1, n1), v2_n2 = dot(v2, n2);
-            if ((v0_n0 >= 0 && v1_n1 >= 0 && v2_n2 >= 0) ||
-                (v0_n0 <= 0 && v1_n1 <= 0 && v2_n2 <= 0)) {
-                float alpha = v1_n1 / alpha_max;
-                float beta = v2_n2 / beta_max;
-                float gamma = 1 - alpha - beta;
-                SampleParams params;
-                params.p_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
-                
-                alpha = dot(v1 + Vector2D(0, 1), n1) / alpha_max;
-                beta = dot(v2 + Vector2D(0, 1), n2) / beta_max;
-                gamma = 1 - alpha - beta;
-                params.p_dy_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
-                
-                alpha = dot(v1 + Vector2D(1, 0), n1) / alpha_max;
-                beta = dot(v2 + Vector2D(1, 0), n2) / beta_max;
-                gamma = 1 - alpha - beta;
-                params.p_dx_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
-                
-                params.psm = this->psm;
-                params.lsm = this->lsm;
-                Color color = tex.sample(params);
-                fill_pixel(x, y, color);
+            for (size_t dx=0; dx<supersampling_size; dx++) {
+                for (size_t dy=0; dy<supersampling_size; dy++) {
+                    float x_center = x + step_size * 0.5 + dx * step_size;
+                    float y_center = y + step_size * 0.5 + dy * step_size;
+                    Vector2D v0(x_center-x0, y_center-y0), v1(x_center-x1, y_center-y1), v2(x_center-x2, y_center-y2);
+                    // Test whether sample point is in our triangle
+                    float v0_n0 = dot(v0, n0), v1_n1 = dot(v1, n1), v2_n2 = dot(v2, n2);
+                    if ((v0_n0 >= 0 && v1_n1 >= 0 && v2_n2 >= 0) ||
+                        (v0_n0 <= 0 && v1_n1 <= 0 && v2_n2 <= 0)) {
+                        float alpha = v1_n1 / alpha_max;
+                        float beta = v2_n2 / beta_max;
+                        float gamma = 1 - alpha - beta;
+                        SampleParams params;
+                        params.p_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                        
+                        alpha = dot(v1 + Vector2D(0, 1), n1) / alpha_max;
+                        beta = dot(v2 + Vector2D(0, 1), n2) / beta_max;
+                        gamma = 1 - alpha - beta;
+                        params.p_dy_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                        
+                        alpha = dot(v1 + Vector2D(1, 0), n1) / alpha_max;
+                        beta = dot(v2 + Vector2D(1, 0), n2) / beta_max;
+                        gamma = 1 - alpha - beta;
+                        params.p_dx_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                        
+                        params.psm = this->psm;
+                        params.lsm = this->lsm;
+                        Color color = tex.sample(params);
+                        sample_buffer[(y*width+x)*sample_rate + dy*supersampling_size+dx] = color;
+                    }
+                }
             }
         }
     }
