@@ -11,18 +11,38 @@ namespace CGL {
 Color Texture::sample(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
     // return magenta for invalid level
+    Color (CGL::Texture::*sample_method)(Vector2D, int);
     if (sp.psm == P_NEAREST) {
-        return sample_nearest(sp.p_uv);
+        sample_method = &Texture::sample_nearest;
     } else if (sp.psm == P_LINEAR) {
-        return sample_bilinear(sp.p_uv);
+        sample_method = &Texture::sample_bilinear;
+    } else {
+        sample_method = &Texture::sample_nearest;
     }
+    
+    int level;
+    if (sp.lsm == L_ZERO) {
+        level = 0;
+        return (this->*sample_method)(sp.p_uv, level);
+    } else if (sp.lsm == L_NEAREST) {
+        level = round(get_level(sp));
+        return (this->*sample_method)(sp.p_uv, level);
+    } else if (sp.lsm == L_LINEAR) {
+        float continuous_level = get_level(sp);
+        int low_level = floor(continuous_level);
+        int high_level = ceil(continuous_level);
+        Color low_color = (this->*sample_method)(sp.p_uv, low_level);
+        Color high_color = (this->*sample_method)(sp.p_uv, high_level);
+        return lerp(continuous_level-low_level, low_color, high_color);
+    }
+    
     return Color(1, 0, 1);
 }
 
 float Texture::get_level(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
-    
-    return 0;
+    float l = max(((sp.p_dx_uv - sp.p_uv)*this->width).norm(), ((sp.p_dy_uv - sp.p_uv)*this->height).norm());
+    return log2(l);
 }
 
 Color MipLevel::get_texel(int tx, int ty) {
@@ -49,7 +69,6 @@ Color Texture::sample_bilinear(Vector2D uv, int level) {
     if (base_tx + 1 >= mip.width && base_ty + 1 >= mip.height) {
         c01 = c10 = c11 = c00;
     } else if (base_tx + 1 >= mip.width) {
-        std::cout << base_tx << std::endl;
         c01 = mip.get_texel(base_tx, base_ty + 1);
         c10 = c00;
         c11 = c01;

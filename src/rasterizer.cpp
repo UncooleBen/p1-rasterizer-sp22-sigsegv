@@ -188,9 +188,19 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
                 float alpha = v1_n1 / alpha_max;
                 float beta = v2_n2 / beta_max;
                 float gamma = 1 - alpha - beta;
-                Vector2D uv = alpha * uv0 + beta * uv1 + gamma * uv2;
                 SampleParams params;
-                params.p_uv = uv;
+                params.p_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                
+                alpha = dot(v1 + Vector2D(0, 1), n1) / alpha_max;
+                beta = dot(v2 + Vector2D(0, 1), n2) / beta_max;
+                gamma = 1 - alpha - beta;
+                params.p_dy_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                
+                alpha = dot(v1 + Vector2D(1, 0), n1) / alpha_max;
+                beta = dot(v2 + Vector2D(1, 0), n2) / beta_max;
+                gamma = 1 - alpha - beta;
+                params.p_dx_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
+                
                 params.psm = this->psm;
                 params.lsm = this->lsm;
                 Color color = tex.sample(params);
