@@ -60,7 +60,8 @@ namespace CGL {
   class RasterizerImp : public Rasterizer {
   private:
     // The total number of samples
-    unsigned int sample_rate;
+    unsigned int sample_rate = 1;
+    unsigned int supersampling_size = 1;
 
     // Constants indicating which sampling methods are used
     PixelSampleMethod psm;

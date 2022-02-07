@@ -21,14 +21,11 @@ void RasterizerImp::fill_pixel(size_t x, size_t y, Color c) {
     // TODO: Task 2: You might need to this function to fix points and lines (such as the black rectangle border in test4.svg)
     // NOTE: You are not required to implement proper supersampling for points and lines
     // It is sufficient to use the same color for all supersamples of a pixel for points and lines (not triangles)
-    size_t supersampling_size = round(sqrt(this->sample_rate));
     for (size_t dy=0; dy<supersampling_size; dy++) {
         for (size_t dx=0; dx<supersampling_size; dx++) {
             sample_buffer[(y * width + x) * sample_rate + dy * supersampling_size + dx] = c;
         }
     }
-    
-    
 }
 
 // Rasterize a point: simple example to help you start familiarizing
@@ -80,13 +77,12 @@ void RasterizerImp::rasterize_triangle(float x0, float y0,
     Vector2D n0(-(y1-y0), x1-x0), n1(-(y2-y1), x2-x1), n2(-(y0-y2), x0-x2);
     
     // Bounding box of the triangle
-    size_t x_min = (size_t) min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
-    size_t x_max = (size_t) max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
-    size_t y_min = (size_t) min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
-    size_t y_max = (size_t) max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
+    size_t x_min = min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
+    size_t x_max = max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
+    size_t y_min = min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
+    size_t y_max = max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
     
     // Loop through x and y in the bounding box
-    size_t supersampling_size = round(sqrt(this->sample_rate));
     float step_size = 1.0 / supersampling_size;
     
     for (size_t x=x_min; x<x_max; x++) {
@@ -129,10 +125,10 @@ void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Co
     // Normal vector of three lines: n = (-(y1-y0), (x1-x0))
     Vector2D n0(-(y1-y0), x1-x0), n1(-(y2-y1), x2-x1), n2(-(y0-y2), x0-x2);
     // Bounding box of the triangle
-    size_t x_min = (size_t) min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
-    size_t x_max = (size_t) max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
-    size_t y_min = (size_t) min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
-    size_t y_max = (size_t) max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
+    size_t x_min = min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
+    size_t x_max = max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
+    size_t y_min = min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
+    size_t y_max = max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
     // Ranges of alpha and bete
     float alpha_max = dot(Vector2D(x0 - x1, y0 - y1), n1);
     float beta_max = dot(Vector2D(x1 - x2, y1 - y2), n2);
@@ -169,15 +165,14 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
     Vector2D n0(-(y1-y0), x1-x0), n1(-(y2-y1), x2-x1), n2(-(y0-y2), x0-x2);
     
     // Bounding box of the triangle
-    size_t x_min = (size_t) min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
-    size_t x_max = (size_t) max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
-    size_t y_min = (size_t) min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
-    size_t y_max = (size_t) max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
+    size_t x_min = min(min(floor(x0), floor(x1)), min(floor(x2), floor((float) width)));
+    size_t x_max = max(max(ceil(x0), ceil(x1)), max(ceil(x2), ceil((float) 0)));
+    size_t y_min = min(min(floor(y0), floor(y1)), min(floor(y2), floor((float) height)));
+    size_t y_max = max(max(ceil(y0), ceil(y1)), max(ceil(y2), ceil((float) 0)));
     // Ranges of alpha and bete
     float alpha_max = dot(Vector2D(x0 - x1, y0 - y1), n1);
     float beta_max = dot(Vector2D(x1 - x2, y1 - y2), n2);
     // Loop through x and y in the bounding box
-    size_t supersampling_size = round(sqrt(this->sample_rate));
     float step_size = 1.0 / supersampling_size;
     
     for (size_t x=x_min; x<x_max; x++) {
@@ -231,7 +226,7 @@ void RasterizerImp::set_sample_rate(unsigned int rate) {
     // TODO: Task 2: You may want to update this function for supersampling support
     
     this->sample_rate = rate;
-    
+    this->supersampling_size = round(sqrt(rate));
     
     this->sample_buffer.resize(width * height * sample_rate, Color::White);
 }
