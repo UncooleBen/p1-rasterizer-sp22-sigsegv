@@ -27,12 +27,17 @@ Color Texture::sample(const SampleParams& sp) {
         level = 0;
         return (this->*sample_method)(sp.p_uv, level);
     } else if (sp.lsm == L_NEAREST) {
-        level = round(get_level(sp));
+        level = min((int)mipmap.size()-1, max(0, (int)round(get_level(sp))));
         //float norm_level = level * 1.0 / kMaxMipLevels;
         //return Color(norm_level, norm_level, norm_level);
         return (this->*sample_method)(sp.p_uv, level);
     } else if (sp.lsm == L_LINEAR) {
         float continuous_level = get_level(sp);
+        if (continuous_level < 0.0) {
+            return (this->*sample_method)(sp.p_uv, 0);
+        } else if (continuous_level > mipmap.size() - 1) {
+            return (this->*sample_method)(sp.p_uv, mipmap.size()-1);
+        }
         int low_level = floor(continuous_level);
         int high_level = ceil(continuous_level);
         Color low_color = (this->*sample_method)(sp.p_uv, low_level);
