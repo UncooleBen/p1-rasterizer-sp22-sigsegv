@@ -183,6 +183,7 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
     for (size_t x=x_min; x<x_max; x++) {
         for (size_t y=y_min; y<y_max; y++) {
             float pixel_x = x + 0.5, pixel_y = y + 0.5;
+            // Setting up params
             SampleParams params;
             
             Vector2D pixel_v1(pixel_x-x1, pixel_y-y1), pixel_v2(pixel_x-x2, pixel_y-y2);
@@ -191,11 +192,13 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
             float gamma = 1 - alpha - beta;
             params.p_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
             
+            // barycentric uv for (x, y+1)
             alpha = dot(pixel_v1 + Vector2D(0, 1), n1) / alpha_max;
             beta = dot(pixel_v2 + Vector2D(0, 1), n2) / beta_max;
             gamma = 1 - alpha - beta;
             params.p_dy_uv = alpha * uv0 + beta * uv1 + gamma * uv2;
             
+            // barycentric uv for (x+1, y)
             alpha = dot(pixel_v1 + Vector2D(1, 0), n1) / alpha_max;
             beta = dot(pixel_v2 + Vector2D(1, 0), n2) / beta_max;
             gamma = 1 - alpha - beta;
@@ -203,6 +206,9 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
             
             params.psm = this->psm;
             params.lsm = this->lsm;
+            // Sample the texture
+            Color color = tex.sample(params);
+            
             for (size_t dx=0; dx<supersampling_size; dx++) {
                 for (size_t dy=0; dy<supersampling_size; dy++) {
                     float x_center = x + step_size * 0.5 + dx * step_size;
@@ -212,7 +218,6 @@ void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, fl
                     float v0_n0 = dot(v0, n0), v1_n1 = dot(v1, n1), v2_n2 = dot(v2, n2);
                     if ((v0_n0 >= 0 && v1_n1 >= 0 && v2_n2 >= 0) ||
                         (v0_n0 <= 0 && v1_n1 <= 0 && v2_n2 <= 0)) {
-                        Color color = tex.sample(params);
                         sample_buffer[(y*width+x)*sample_rate + dy*supersampling_size+dx] = color;
                     }
                 }
