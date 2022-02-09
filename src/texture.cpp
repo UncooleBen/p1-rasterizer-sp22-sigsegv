@@ -39,7 +39,7 @@ Color Texture::sample(const SampleParams& sp) {
             return (this->*sample_method)(sp.p_uv, mipmap.size()-1);
         }
         int low_level = floor(continuous_level);
-        int high_level = ceil(continuous_level);
+        int high_level = low_level + 1;
         Color low_color = (this->*sample_method)(sp.p_uv, low_level);
         Color high_color = (this->*sample_method)(sp.p_uv, high_level);
         return lerp(continuous_level-low_level, low_color, high_color);
