@@ -63,6 +63,10 @@ Color Texture::sample_nearest(Vector2D uv, int level) {
     auto& mip = mipmap[level];
     float tx = uv.x * mip.width, ty = uv.y * mip.height;
     size_t rounded_tx = round(tx), rounded_ty = round(ty);
+    rounded_tx = max<size_t>(0, rounded_tx);
+    rounded_ty = max<size_t>(0, rounded_ty);
+    rounded_tx = min<size_t>(width-1, rounded_tx);
+    rounded_ty = min<size_t>(height-1, rounded_ty);
     Color col = mip.get_texel(rounded_tx, rounded_ty);
     return col;
 }
